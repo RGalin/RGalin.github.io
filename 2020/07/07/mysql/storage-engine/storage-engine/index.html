@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="MySQL-逻辑架构, XiaoRong">
+    <meta name="keywords" content="MySQL-存储引擎, XiaoRong">
     <meta name="description" content="">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -16,7 +16,7 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
 
 
-    <title>MySQL-逻辑架构 | XiaoRong</title>
+    <title>MySQL-存储引擎 | XiaoRong</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/all.css">
@@ -203,12 +203,12 @@
 
 
 
-<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/1.jpg')">
+<div class="bg-cover pd-header post-cover" style="background-image: url('/medias/featureimages/4.jpg')">
     <div class="container" style="right: 0px;left: 0px;">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
-                    <h1 class="description center-align post-title">MySQL-逻辑架构</h1>
+                    <h1 class="description center-align post-title">MySQL-存储引擎</h1>
                 </div>
             </div>
         </div>
@@ -259,7 +259,7 @@
                 
                 <div class="post-date info-break-policy">
                     <i class="far fa-calendar-minus fa-fw"></i>发布日期:&nbsp;&nbsp;
-                    2020-07-05
+                    2020-07-07
                 </div>
                 
 
@@ -275,64 +275,220 @@
         <hr class="clearfix">
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h1 id="1-逻辑架构"><a href="#1-逻辑架构" class="headerlink" title="1 逻辑架构"></a>1 逻辑架构</h1><p>MySQL的逻辑系统架构包括：连接层、SQL处理层和存储引擎层。<br><img src="architecture.png" alt=""></p>
-<h2 id="1-1-连接层"><a href="#1-1-连接层" class="headerlink" title="1.1 连接层"></a>1.1 连接层</h2><ul>
-<li><p><strong>创建连接</strong><br>当MySQL启动（MySQL服务器就是一个进程），等待客户端连接，每一个客户端连接请求，服务器都会新建一个线程处理（如果是线程池的话，则是分配一个空的线程），每个线程都是独立的，拥有各自的内存处理空间，但是，如果这个请求只是查询，没关系，但是若是修改数据，很显然，当两个线程修改同一块内存是会引发数据同步问题的。<br><img src="connection.png" alt=""></p>
+                <h1 id="1-存储引擎"><a href="#1-存储引擎" class="headerlink" title="1 存储引擎"></a>1 存储引擎</h1><h2 id="1-1-相关指令"><a href="#1-1-相关指令" class="headerlink" title="1.1 相关指令"></a>1.1 相关指令</h2><ul>
+<li><p><strong>查看MySQL所提供的存储引擎</strong></p>
+<pre class=" language-mysql"><code class="language-mysql">  show engines;</code></pre>
+<p>执行结果：<br><img src="image-20201104170815696.png" alt=""></p>
 </li>
-<li><p><strong>鉴权校验</strong><br>客户端连接到服务器后，服务器需要对其进行验证，也就是用户名、IP、密码验证，一旦连接成功，还要验证是否具有执行某个特定查询的权限（例如，是否允许客户端对某个数据库某个表的某个操作）。<br><img src="auth.png" alt=""></p>
+<li><p><strong>查看MySQL当前默认的存储引擎</strong></p>
+<pre class=" language-mysql"><code class="language-mysql">  show variables like '%storage_engine%';</code></pre>
+<p>执行结果：<br><img src="image-20201104171146521.png" alt=""></p>
+</li>
+<li><p><strong>查看表的存储引擎</strong></p>
+<pre class=" language-mysql"><code class="language-mysql">  show table status like "table_name";</code></pre>
+<p>执行结果：<br><img src="image-20201104171430313.png" alt=""></p>
 </li>
 </ul>
-<h2 id="1-2-SQL处理层"><a href="#1-2-SQL处理层" class="headerlink" title="1.2 SQL处理层"></a>1.2 SQL处理层</h2><p>这一层的主要功能：SQL语句的解析、SQL语句优化、缓存查询、MySQL内置函数的实现和跨存储引擎功能。</p>
+<h2 id="1-2-MyISAM存储引擎"><a href="#1-2-MyISAM存储引擎" class="headerlink" title="1.2 MyISAM存储引擎"></a>1.2 MyISAM存储引擎</h2><p>在MySQL 5.5之前，MyISAM是默认的存储引擎。MyISAM不支持事务和行级锁，而且有一个毫无疑问的缺陷就是崩溃后无法安全恢复。</p>
+<ul>
+<li><p><strong>特性：</strong></p>
+<ul>
+<li>全文检索</li>
+<li>压缩</li>
+<li>空间函数(GIS)</li>
+<li>表级锁</li>
+</ul>
+</li>
+<li><p><strong>存储</strong><br>MyISAM将表存储在两个文件中：数据文件和索引文件。</p>
+<table>
+<thead>
+<tr>
+<th>文件类型</th>
+<th>后缀名</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数据文件</td>
+<td><code>.MYD</code></td>
+</tr>
+<tr>
+<td>索引文件</td>
+<td><code>.MYI</code></td>
+</tr>
+</tbody></table>
+<p>MyISAM表包含两种类型的行：动态行和静态行(长度固定)。</p>
+</li>
+<li><p><strong>表修复</strong><br>执行表的修复可能导致一些数据的丢失，而且修复操作是非常慢的。</p>
+<pre class=" language-bash"><code class="language-bash">  CHECK TABLE table_name<span class="token punctuation">;</span> <span class="token comment" spellcheck="true"># 检查表的错误</span>
+  REPAIR TABLE table_name<span class="token punctuation">;</span> <span class="token comment" spellcheck="true"># 修复表</span>
+  myisamchk； <span class="token comment" spellcheck="true"># MySQL服务器已经关闭，通过这个命令进行检查和修复操作</span></code></pre>
+</li>
+<li><p><strong>压缩表</strong><br>适合压缩的表：表在创建并导入数据以后，不会再进行修改操作。<br>压缩表是不能进行修改的（除非先将表接触压缩，修改数据，然后再次压缩）。压缩表可以极大的减少磁盘空间的占用，因此也可以减少磁盘I/O，从而提升查询性能。压缩表也支持索引，但索引也是只读的。<br>压缩指令：</p>
+<pre class=" language-mysql"><code class="language-mysql">  myisampack -b -f xxx.MYI</code></pre>
+</li>
+<li><p><strong>全文索引</strong><br>MyISAM的全文索引是一类特殊的B-Tree的索引，共有两层。</p>
+<ul>
+<li>第一层是所有的关键字</li>
+<li>第二层包含的是一组相关的“文档指针”</li>
+</ul>
+<p>全文索引不会索引文档对象中的所有词语，它会根据如下规则过滤一些词语：</p>
+<ul>
+<li>停用词列表中的词都不会被索引。默认的停用词根据通用的英语的使用来设置，可以使用参数ft_stopword_file指定一组外部文件来使用自定义的停用词。</li>
+<li>对于长度大于ft_min_word_len的词语和长度小于ft_max_word_len的词语，都不会被索引。</li>
+</ul>
+</li>
+<li><p><strong>适用场景</strong></p>
+<ul>
+<li>非事务型应用（数据仓库，报表，日志数据）</li>
+<li>只读类应用</li>
+<li>空间类应用（空间函数，坐标）</li>
+</ul>
+</li>
+</ul>
+<h2 id="1-3-InnoDB存储引擎"><a href="#1-3-InnoDB存储引擎" class="headerlink" title="1.3 InnoDB存储引擎"></a>1.3 InnoDB存储引擎</h2><p>在MySQL 5.5以及以后版本，InnoDB是默认存储引擎。</p>
+<ul>
+<li><p><strong>存储</strong><br>InnoDB的数据存储在表空间。<br><strong>表空间</strong></p>
+<ul>
+<li>独立表空间（tablename.ibd）<ul>
+<li>可以通过optimize table 收缩系统文件</li>
+<li>可以同时向多个文件刷新数据</li>
+</ul>
+</li>
+<li>系统表空间（ibdataX）<ul>
+<li>无法简单的收缩文件大小</li>
+<li>会产生IO瓶颈</li>
+</ul>
+</li>
+</ul>
+<p><strong>表空间相关参数：</strong><code>innodb_file_per_table</code>。</p>
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ON</td>
+<td>使用独立表空间</td>
+</tr>
+<tr>
+<td>OFF</td>
+<td>使用系统表空间</td>
+</tr>
+</tbody></table>
+</li>
+<li><p><strong>特性</strong></p>
+<ul>
+<li>Innodb是一种事务性存储引擎</li>
+<li>完全支持事物的ACID特性</li>
+<li>Redo Log和Undo Log</li>
+<li>Innodb支持行级锁（并发程度更高）和表级锁。</li>
+</ul>
+</li>
+<li><p><strong>适用场景</strong><br>Innodb适合大多数OLTP应用。</p>
+</li>
+</ul>
+<h2 id="1-4-MyISAM和InnoDB的区别"><a href="#1-4-MyISAM和InnoDB的区别" class="headerlink" title="1.4 MyISAM和InnoDB的区别"></a>1.4 MyISAM和InnoDB的区别</h2><table>
+<thead>
+<tr>
+<th><strong>项目</strong></th>
+<th><strong>MyISAM</strong></th>
+<th><strong>InnoDB</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>锁级别</strong></td>
+<td>表级锁(table-level locking)</td>
+<td>行级锁(row-level locking)和表级锁,默认为行级锁</td>
+</tr>
+<tr>
+<td><strong>事务</strong></td>
+<td>MyISAM强调的是性能，每次查询具有原子性，其执行速度比InnoDB类型更快，但是不提供事务支持。</td>
+<td>InnoDB提供事务支持事务，外部键等高级数据库功能。</td>
+</tr>
+<tr>
+<td><strong>外键</strong></td>
+<td>不支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td><strong>MVCC</strong></td>
+<td>不支持</td>
+<td>支持</td>
+</tr>
+</tbody></table>
+<h2 id="1-5-MVCC-Multiversion-concurrency-control"><a href="#1-5-MVCC-Multiversion-concurrency-control" class="headerlink" title="1.5 MVCC(Multiversion concurrency control)"></a>1.5 MVCC(Multiversion concurrency control)</h2><p>MySQL的大多数事务型存储引擎实现的都不是简单的行级锁。基于提高并发性能的考虑，他们一般都同时实现了多版本并发控制(MVCC)。可以认为MVCC是行级锁的一个变种，但是它在很多情况下避免了加锁操作，因此开销更低。大都实现了非阻塞的读操作，写操作也只锁定必要的行。MVCC的实现有乐观并发控制和悲观并发控制。MVCC的实现，是通过保存数据在某个时间点的快照来实现的。<br>InnoDB采用MVCC来支持高并发，并且实现了四个标准的隔离级别。默认级别是REPEATABLE READ(可重复读)，并且通过间隙锁（next-key locking）策略防止幻读的出现。间隙锁使得InnoDB不仅仅锁定查询涉及的行，还会对索引中的间隙进行锁定，以防止幻影行的插入。</p>
 <blockquote>
-<p>所谓跨存储引擎就是说每个引擎都需要提供的功能，也就是引擎需要对外提供接口。例如：存储过程、触发器、视图等。</p>
-</blockquote>
-<p><strong>处理流程：</strong></p>
+<p>Next-Key locking 是行锁和间隙锁的组合，当InnoDB扫描索引记录的时候，会首先对索引记录加上行锁（Record Lock），再对索引记录两边的间隙加上间隙锁（Gap Lock）。加上间隙锁之后，其他事务就不能在这个间隙修改或者插入记录。<br><strong>Gap Lock</strong>在InnoDB的唯一作用就是防止其他事务的插入操作，以此防止幻读的发生。<br><strong>InnoDB自动使用间隙锁的条件：</strong></p>
 <ol>
-<li>如果是select语句，首先会查询缓存是否已有相应结果，有则返回结果，没有则进行下一步。如果不是select语句，同样执行到下一步。</li>
-<li>解析查询，创建一个内部数据结构（解析树），这个解析树主要用来做SQL语句语义和语法解析。</li>
-<li>优化，优化SQL语句，例如重写查询，决定表的读取顺序，以及选择需要的索引等。这一阶段用户是可以查询的，查询服务器优化器是如何进行优化的，便于用户重构查询和修改相关配置，达到最优化。这一阶段还涉及到存储引擎，优化器会询问存储引擎，比如某个操作的开销信息、是否对待特定索引有查询优化等。<br><img src="sql.png" alt=""></li>
+<li>必须在Repeatable Read级别下</li>
+<li>检索条件必须有索引</li>
 </ol>
-<h3 id="1-2-1-查询缓存"><a href="#1-2-1-查询缓存" class="headerlink" title="1.2.1 查询缓存"></a>1.2.1 查询缓存</h3><p>执行查询语句的时候，会先查询缓存。不过，MySQL 8.0 版本后移除，因为这个功能不太实用。缓存的对象包括SQL语句、SQL执行计划、数据。<br>开启查询缓存后在同样的查询条件以及数据情况下，会直接在缓存中返回结果。这里的查询条件包括查询本身、当前要查询的数据库、客户端协议版本号等一些可能影响结果的信息。因此任何两个查询在任何字符上的不同都会导致缓存不命中。此外，如果查询中包含任何用户自定义函数、存储函数、用户变量、临时表、MySQL库中的系统表，其查询结果也不会被缓存。</p>
-<p>缓存建⽴之后，MySQL的查询缓存系统会跟踪查询中涉及的每张表，如果这些表（数据或结构）发⽣变 化，那么和这张表相关的所有缓存数据都将失效。</p>
-<p>缓存虽然能够提升数据库的查询性能，但是缓存同时也带来了额外的开销，每次查询后都要做⼀次缓存操作，失效后还要销毁。 因此，开启缓存查询要谨慎，尤其对于写密集的应⽤来说更是如此。如果开启，要注意合理控制缓存空间⼤⼩，⼀般来说其⼤⼩设置为⼏⼗MB⽐较合适。此外，还可以通过<code>sql_cache</code>和<code>sql_no_cache</code>来控制某个查询语句是否需要缓存。</p>
-<pre class=" language-mysql"><code class="language-mysql">    select sql_no_cache count(*) from table;</code></pre>
-<p><strong>开启查询缓存的方式</strong></p>
+</blockquote>
+<p><strong>相关概念</strong></p>
+<ol>
+<li><p><strong>read view</strong><br>read view 主要是用来做可见性判断的，比较普遍的解释便是”本事务不可见的当前其他活跃事务”。对于read view快照的生成时机，也非常关键，正是因为生成时机的不同，造成了RC,RR两种隔离级别的不同可见性。</p>
 <ul>
-<li><strong>方式一：</strong>my.cnf加入一下配置，重启MySQL开启查询缓存。<pre class=" language-mysql"><code class="language-mysql">query_cache_type=1
-query_cache_size=600000</code></pre>
+<li>在InnoDB中(默认repeatable read级别)，事务在begin/start transaction之后的第一条select读操作后，会创建一个快照(read view)， 将当前系统中活跃的其他事务记录记录起来;</li>
+<li>在InnoDB中(默认repeatable committed级别)，事务中每条select语句都会创建一个快照(read view);</li>
+</ul>
 </li>
-<li><strong>方式二：</strong>MySQL执行以下命令开启查询缓存。<pre class=" language-mysql"><code class="language-mysql">set global query_cache_type=1
-set global query_cache_size=600000</code></pre>
+<li><p><strong>undo-log</strong></p>
+<ul>
+<li>Undo log是InnoDB MVCC事务特性的重要组成部分。当我们对记录做了变更操作时就会产生undo记录，Undo记录默认被记录到系统表空间(ibdata)中，但从5.6开始，也可以使用独立的Undo 表空间。</li>
+<li>Undo记录中存储的是老版本数据，当一个旧的事务需要读取数据时，为了能读取到老版本的数据，需要顺着undo链找到满足其可见性的记录。当版本链很长时，通常可以认为这是个比较耗时的操作。</li>
+<li>大多数对数据的变更操作包括INSERT/DELETE/UPDATE，其中INSERT操作在事务提交前只对当前事务可见，因此产生的Undo日志可以在事务提交后直接删除（谁会对刚插入的数据有可见性需求呢！！），而对于UPDATE/DELETE则需要维护多版本信息，在InnoDB里，UPDATE和DELETE操作产生的Undo日志被归成一类，即update_undo。</li>
+<li>另外，在回滚段中的undo logs分为：insert undo log 和 update undo log<ul>
+<li>insert undo log : 事务对insert新记录时产生的undolog，只在事务回滚时需要，并且在事务提交后就可以立即丢弃。</li>
+<li>update undo log : 事务对记录进行delete和update操作时产生的undo log，不仅在事务回滚时需要，一致性读也需要，所以不能随便删除，只有当数据库所使用的快照中不涉及该日志记录，对应的回滚日志才会被purge线程删除。</li>
+</ul>
 </li>
 </ul>
-<h3 id="1-2-2-解析查询"><a href="#1-2-2-解析查询" class="headerlink" title="1.2.2 解析查询"></a>1.2.2 解析查询</h3><p>SQL语句结构</p>
-<pre class=" language-mysql"><code class="language-mysql">    SELECT DISTINCT
-    < select_list>
-    FROM 
-        < left_table> < join_type >
-    JOIN < right_table > ON < join_condition >
-    WHERE 
-        < where_condition >
-    GROUP BY
-        < group_by_list >
-    HAVING 
-        < having_condition >
-    ORDER BY
-        < order_by_condition >
-    LIMIT < limit_number ></code></pre>
-<p>SQL解析流程<br><img src="image-20201104161355641.png" alt=""></p>
-<h3 id="1-2-3-优化器"><a href="#1-2-3-优化器" class="headerlink" title="1.2.3 优化器"></a>1.2.3 优化器</h3><p>当我们编写Sql语句执行时，优化器会觉得我写的sql语句性能不够好，这个时候，优化器会自己写一个等价于跟我写的执行后结果一致的sql语句进行代替。</p>
-<h2 id="1-3-存储引擎层"><a href="#1-3-存储引擎层" class="headerlink" title="1.3 存储引擎层"></a>1.3 存储引擎层</h2><p>MySQL中常用的存储引擎：</p>
+</li>
+<li><p><strong>InnoDB存储引擎在数据库每行数据的后面添加了三个字段</strong></p>
 <ul>
-<li>MyISAM </li>
-<li>InnoDB</li>
-<li>CSV</li>
-<li>Memory</li>
-<li>Archive</li>
-<li>Ferderated</li>
+<li>6字节的事务ID(DB_TRX_ID)字段: 用来标识最近一次对本行记录做修改(insert|update)的事务的标识符，即最后一次修改(insert|update)本行记录的事务id。至于delete操作，在innodb看来也不过是一次update操作，更新行中的一个特殊位将行表示为deleted，并非真正删除。</li>
+<li>7字节的回滚指针(DB_ROLL_PTR)字段: 指写入回滚段(rollback segment)的 undo log record (撤销日志记录记录)。如果一行记录被更新，则 undo log record 包含 ‘重建该行记录被更新之前内容’ 所必须的信息。</li>
+<li>6字节的DB_ROW_ID字段: 包含一个随着新行插入而单调递增的行ID，当由innodb自动产生聚集索引时，聚集索引会包括这个行ID的值，否则这个行ID不会出现在任何索引中。</li>
 </ul>
-<p>查看MySQL所有支持的存储引擎的指令：</p>
-<pre class=" language-mysql"><code class="language-mysql">    show engines;</code></pre>
+</li>
+</ol>
+<p><strong>简单的事务流程图示</strong><br><img src="tx.png" alt=""></p>
+<p><strong>InnoDB中的读操作</strong><br>在InnoDB中的操作可以分为当前读(current read)和快照读(snapshot read)。</p>
+<ul>
+<li><p>快照读(snapshot read)</p>
+<ul>
+<li>简单的select操作(当然不包括 select … lock in share mode，select … for update)。</li>
+</ul>
+</li>
+<li><p>当前读(current read)  </p>
+<ul>
+<li>select … lock in share mode</li>
+<li>select … for update</li>
+<li>insert</li>
+<li>update</li>
+<li>delete</li>
+</ul>
+</li>
+</ul>
+<p>在RR级别下，快照读是通过MVCC(多版本控制)和undo log来实现的，当前读是通过加record lock(记录锁)和gap lock(间隙锁)来实现的。InnoDB在快照读的情况下并没有真正的避免幻读，但是在当前读的情况下避免了不可重复读和幻读。</p>
+<p><strong>MVCC的特点</strong><br>一般我们认为MVCC有下面几个特点：</p>
+<ul>
+<li>每行数据都存在一个版本，每次数据更新时都更新该版本。</li>
+<li>修改时Copy出当前版本，然后随意修改，各个事务之间无干扰。</li>
+<li>保存时比较版本号，如果成功(commit)，则覆盖原记录，失败则放弃copy(rollback)。</li>
+<li>就是每行都有版本号，保存时根据版本号决定是否成功。</li>
+</ul>
+<p><strong>InnoDB对MVCC的实现</strong></p>
+<ul>
+<li>事务以排他锁的形式修改原始数据</li>
+<li>把修改前的数据存放于undo log，通过回滚指针与主数据关联。</li>
+<li>修改成功（commit）啥都不做，失败则恢复undo log中的数据（rollback）。</li>
+</ul>
+<blockquote>
+<p>InnoDB中的MVCC只在 READ COMMITTED 和 REPEATABLE READ 两个隔离级别下工作。</p>
+</blockquote>
 
             </div>
             <hr/>
@@ -358,7 +514,7 @@ set global query_cache_size=600000</code></pre>
                     </i>
                 </span>
                 <span class="reprint-info">
-                    <a href="https://linzai745.github.io/2020/07/05/mysql/logic-architecture/logic-architecture/">https://linzai745.github.io/2020/07/05/mysql/logic-architecture/logic-architecture/</a>
+                    <a href="https://linzai745.github.io/2020/07/07/mysql/storage-engine/storage-engine/">https://linzai745.github.io/2020/07/07/mysql/storage-engine/storage-engine/</a>
                 </span>
             </div>
             <div class="reprint__notice">
@@ -443,9 +599,10 @@ set global query_cache_size=600000</code></pre>
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fas fa-chevron-left"></i>&nbsp;上一篇</div>
+                <i class="far fa-dot-circle"></i>&nbsp;本篇
+            </div>
             <div class="card">
                 <a href="/2020/07/07/mysql/storage-engine/storage-engine/">
                     <div class="card-image">
@@ -463,9 +620,9 @@ set global query_cache_size=600000</code></pre>
                         
                     </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="far fa-clock fa-fw icon-date"></i>2020-07-07
-                        </span>
+                            <span class="publish-date">
+                                <i class="far fa-clock fa-fw icon-date"></i>2020-07-07
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
@@ -478,6 +635,7 @@ set global query_cache_size=600000</code></pre>
                         </span>
                     </div>
                 </div>
+
                 
                 <div class="card-action article-tags">
                     
@@ -500,31 +658,31 @@ set global query_cache_size=600000</code></pre>
                 下一篇&nbsp;<i class="fas fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2020/06/26/jvm/subsystem/subsystem/">
+                <a href="/2020/07/05/mysql/logic-architecture/logic-architecture/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/4.jpg" class="responsive-img" alt="JVM的执行子系统">
+                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="MySQL-逻辑架构">
                         
-                        <span class="card-title">JVM的执行子系统</span>
+                        <span class="card-title">MySQL-逻辑架构</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            JVM的执行子系统，包括类文件结构、虚拟机字节码执行引擎、字节码指令、类加载过程、类加载器、双亲委派模型。
+                            MySQL Server的逻辑架构-连接层、SQL处理层、存储引擎层。全局了解每一个分层应该拥有的功能和职责。
                         
                     </div>
                     <div class="publish-info">
                             <span class="publish-date">
-                                <i class="far fa-clock fa-fw icon-date"></i>2020-06-26
+                                <i class="far fa-clock fa-fw icon-date"></i>2020-07-05
                             </span>
                         <span class="publish-author">
                             
                             <i class="fas fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/JVM/" class="post-category">
-                                    JVM
+                            <a href="/categories/MySQL/" class="post-category">
+                                    MySQL
                                 </a>
                             
                             
@@ -534,12 +692,12 @@ set global query_cache_size=600000</code></pre>
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/Java/">
-                        <span class="chip bg-color">Java</span>
+                    <a href="/tags/MySQL/">
+                        <span class="chip bg-color">MySQL</span>
                     </a>
                     
-                    <a href="/tags/JVM/">
-                        <span class="chip bg-color">JVM</span>
+                    <a href="/tags/DB/">
+                        <span class="chip bg-color">DB</span>
                     </a>
                     
                 </div>
